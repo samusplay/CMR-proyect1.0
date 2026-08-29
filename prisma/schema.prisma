@@ -1,0 +1,81 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum InstallationType {
+  SOLAR
+  CARGADOR
+  AMBOS
+}
+
+enum DealStage {
+  NUEVO
+  CONTACTADO
+  CALIFICADO
+  PROPUESTA
+  GANADO
+  PERDIDO
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("vendedor")
+  deals     Deal[]
+  createdAt DateTime @default(now())
+}
+
+model Campaign {
+  id        String   @id @default(uuid())
+  name      String
+  channel   String
+  utmSource String?
+  active    Boolean  @default(true)
+  leads     Lead[]
+  createdAt DateTime @default(now())
+}
+
+model Lead {
+  id         String    @id @default(uuid())
+  name       String
+  email      String
+  phone      String?
+  campaign   Campaign? @relation(fields: [campaignId], references: [id])
+  campaignId String?
+  deal       Deal?
+  createdAt  DateTime  @default(now())
+}
+
+model Deal {
+  id                String            @id @default(uuid())
+  stage             DealStage         @default(NUEVO)
+  installationType  InstallationType
+  estimatedValue    Int               // valor estimado de la instalación, en pesos
+  expectedCloseDate DateTime?         // para saber cuándo se espera cerrar
+  notes             String?           // notas del vendedor durante la negociación
+  assignedTo        User?             @relation(fields: [assignedToId], references: [id])
+  assignedToId      String?
+  lead              Lead              @relation(fields: [leadId], references: [id])
+  leadId            String            @unique
+  client            Client?
+  updatedAt         DateTime          @updatedAt
+}
+
+model Client {
+  id                String   @id @default(uuid())
+  name               String
+  email              String
+  phone              String?
+  address            String?
+  installationDate   DateTime?
+  deal               Deal     @relation(fields: [dealId], references: [id])
+  dealId             String   @unique
+  createdAt          DateTime @default(now())
+}
