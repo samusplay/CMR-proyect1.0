@@ -1,7 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateDealDto } from './dto/create-deal.dto';
-import { DealResponseDto } from './dto/deal-response.dto';
 import { UpdateDealDto } from './dto/update-deal.dto';
 
 @Injectable()
@@ -9,33 +8,22 @@ export class DealsService {
   constructor(private prisma: PrismaService) {
 
   }
-  async create(dto: CreateDealDto): Promise<DealResponseDto> {
-
-    // 1. confirmar que el lead exista de verdad
-    //Buscamos en la base de datos
-    const lead = await this.prisma.lead.findUnique({
-      where: { id: dto.leadId },
-    });
-
-    //Tiramos una expecion
+  async create(dto: CreateDealDto) {
+    const lead = await this.prisma.lead.findUnique({ where: { id: dto.leadId } });
     if (!lead) {
       throw new NotFoundException(`El lead ${dto.leadId} no existe`);
     }
 
-    // 2. confirmar que ese lead no tenga ya una negociación
-    const existingDeal = await this.prisma.deal.findUnique({
-      where: { leadId: dto.leadId },
-    });
-
-    //si tiene una excepcion para el codigo
+    const existingDeal = await this.prisma.deal.findUnique({ where: { leadId: dto.leadId } });
     if (existingDeal) {
       throw new ConflictException(`El lead ${dto.leadId} ya tiene una negociación abierta`);
     }
 
-
-    //al create hay que pasarle el dto 
     return this.prisma.deal.create({
-      data: dto
+      data: {
+        ...dto,
+        expectedCloseDate: dto.expectedCloseDate ? new Date(dto.expectedCloseDate) : undefined,
+      },
     });
   }
 
