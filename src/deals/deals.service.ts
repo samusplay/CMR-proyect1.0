@@ -1,13 +1,18 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { DealWonEvent } from 'src/leads/events/deal-won.event';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateDealDto } from './dto/create-deal.dto';
 import { UpdateDealDto } from './dto/update-deal.dto';
 
+
 @Injectable()
 export class DealsService {
-  constructor(private prisma: PrismaService) {
+  constructor(
+    private prisma: PrismaService,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
-  }
   async create(dto: CreateDealDto) {
     const lead = await this.prisma.lead.findUnique({ where: { id: dto.leadId } });
     if (!lead) {
@@ -28,9 +33,7 @@ export class DealsService {
   }
 
   findAll() {
-    return this.prisma.deal.findMany({
-      include: { lead: true } //Para ver nuestra consulta el Nombre del Trato
-    });
+    return this.prisma.deal.findMany({ include: { lead: true } });
   }
 
   async findOne(id: string) {
@@ -38,30 +41,38 @@ export class DealsService {
       where: { id },
       include: { lead: true },
     });
-
     if (!deal) {
       throw new NotFoundException(`Deal ${id} no encontrado`);
     }
-
     return deal;
   }
 
   async update(id: string, dto: UpdateDealDto) {
-    await this.findOne(id); // reutilizas la validación de que exista
+    const existing = await this.findOne(id);
 
-    return this.prisma.deal.update({
+    // no permitimos reasignar el leadId desde un update — eso solo se decide al crear
+    const { leadId, ...safeData } = dto;
+
+    const updated = await this.prisma.deal.update({
       where: { id },
-      data: dto,
+      data: {
+        ...safeData,
+        expectedCloseDate: dto.expectedCloseDate ? new Date(dto.expectedCloseDate) : undefined,
+      },
     });
+
+    if (dto.stage === 'GANADO' && existing.stage !== 'GANADO') {
+      this.eventEmitter.emit('deal.won', new DealWonEvent(updated.id));
+    }
+
+    return updated;
   }
+
   async remove(id: string) {
     await this.findOne(id);
-
     return this.prisma.deal.update({
       where: { id },
-      data: { stage: 'PERDIDO' }, // soft delete a la manera de un CRM: no se borra, se marca como perdido
+      data: { stage: 'PERDIDO' },
     });
   }
-
-
 }
