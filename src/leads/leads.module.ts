@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
-import { LeadsService } from './leads.service';
+import { AuthModule } from 'src/auth/auth.module';
 import { LeadsController } from './leads.controller';
+import { LeadsService } from './leads.service';
 
 @Module({
+   imports: [AuthModule],
   controllers: [LeadsController],
   providers: [LeadsService],
 })

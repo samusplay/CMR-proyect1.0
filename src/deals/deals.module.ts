@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
-import { DealsService } from './deals.service';
+import { AuthModule } from 'src/auth/auth.module';
 import { DealsController } from './deals.controller';
+import { DealsService } from './deals.service';
 
 @Module({
+  imports: [AuthModule],
   controllers: [DealsController],
   providers: [DealsService],
 })
