@@ -1,27 +1,37 @@
 import { InstallationType } from '@prisma/client';
-import { IsDateString, IsEnum, IsInt, IsNotEmpty, IsOptional, IsPositive, IsString } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsPositive,
+  IsString,
+} from 'class-validator';
 
 export class CreateDealDto {
-  @IsString()
-  @IsNotEmpty()
+  @IsString({ message: 'El id del lead debe ser un texto' })
+  @IsNotEmpty({ message: 'El id del lead no puede estar vacío' })
   leadId !: string;
 
-  @IsEnum(InstallationType)
+  @IsEnum(InstallationType, {
+    message: 'El tipo de instalación debe ser SOLAR, CARGADOR o AMBOS',
+  })
   installationType !: InstallationType;
 
-  @IsInt()
-  @IsPositive()
+  @IsInt({ message: 'El valor estimado debe ser un número entero' })
+  @IsPositive({ message: 'El valor estimado debe ser mayor a cero' })
   estimatedValue !: number;
 
-  @IsDateString()
+  @IsDateString({}, { message: 'La fecha esperada de cierre no es válida' })
   @IsOptional()
   expectedCloseDate?: string;
 
-  @IsString()
+  @IsString({ message: 'Las notas deben ser un texto' })
   @IsOptional()
   notes?: string;
 
-  @IsString()
+  @IsString({ message: 'El id del vendedor asignado debe ser un texto' })
   @IsOptional()
   assignedToId?: string;
 }

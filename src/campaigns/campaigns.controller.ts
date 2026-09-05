@@ -1,10 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CampaignsService } from './campaigns.service';
 import { CampaignResponseDto } from './dtos/campaign-response.dto';
 import { CreateCampaignDto } from './dtos/create-campaign.dto';
 import { UpdateCampaignDto } from './dtos/update-campaign.dto';
 
 @Controller('campaigns')
+@UseGuards(JwtAuthGuard) 
 export class CampaignsController {
   constructor(private readonly campaignsService: CampaignsService) { }
 

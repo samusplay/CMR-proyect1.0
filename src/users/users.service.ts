@@ -7,7 +7,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(dto: CreateUserDto) {
     const existing = await this.prisma.user.findUnique({
@@ -50,6 +50,11 @@ export class UsersService {
     const user = await this.prisma.user.update({ where: { id }, data });
 
     return this.excludePassword(user);
+  }
+
+  //Nuevo metodo para buscar Por email
+  async findByEmail(email: string) {
+    return this.prisma.user.findUnique({ where: { email } });
   }
 
   private excludePassword(user: User) {

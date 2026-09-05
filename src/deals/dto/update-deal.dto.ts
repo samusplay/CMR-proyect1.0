@@ -4,7 +4,9 @@ import { IsEnum, IsOptional } from 'class-validator';
 import { CreateDealDto } from './create-deal.dto';
 
 export class UpdateDealDto extends PartialType(CreateDealDto) {
-  @IsEnum(DealStage)
+  @IsEnum(DealStage, {
+    message: 'La etapa debe ser NUEVO, CONTACTADO, CALIFICADO, PROPUESTA, GANADO o PERDIDO',
+  })
   @IsOptional()
   stage?: DealStage;
 }
