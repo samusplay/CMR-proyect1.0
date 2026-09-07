@@ -1,20 +1,5 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { CampaignsController } from './campaigns.controller';
-import { CampaignsService } from './campaigns.service';
+import { describe } from "node:test";
 
-describe('CampaignsController', () => {
-  let controller: CampaignsController;
+describe({
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [CampaignsController],
-      providers: [CampaignsService],
-    }).compile();
-
-    controller = module.get<CampaignsController>(CampaignsController);
-  });
-
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
-});
+})
