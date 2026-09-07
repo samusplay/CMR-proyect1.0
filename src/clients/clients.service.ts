@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { PrismaService } from 'src/prisma/prisma.service';
-
-import { DealWonEvent } from 'src/leads/events/deal-won.event';
+// alias para que sean llamados
+import { DealWonEvent } from '../leads/events/deal-won.event';
+import { PrismaService } from '../prisma/prisma.service';
 import { UpdateClientDto } from './dto/update-client.dto';
 
 @Injectable()

@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { DealWonEvent } from 'src/leads/events/deal-won.event';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { DealWonEvent } from '../leads/events/deal-won.event';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateDealDto } from './dto/create-deal.dto';
 import { UpdateDealDto } from './dto/update-deal.dto';
 
