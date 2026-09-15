@@ -50,7 +50,7 @@ describe('Ruta Crítica CRM: Eventos y Embudo (e2e)', () => {
     await request(app.getHttpServer())
       .post('/campaigns')
       .set('Authorization', `Bearer ${accessToken}`)
-      .send({ name: 'Campaña Fallida', channel: 'tiktok' })
+      .send({ name: 'Campaña Fallida', channel: 'x' })
       .expect(400);
 
     // Creamos la campaña válida
@@ -59,7 +59,7 @@ describe('Ruta Crítica CRM: Eventos y Embudo (e2e)', () => {
       .set('Authorization', `Bearer ${accessToken}`)
       .send({
         name: 'Promo Cargadores EV',
-        channel: 'facebook', // Canal permitido en tu array ALLOWED_CHANNELS
+        channel: 'tiktok', // Canal permitido en tu array ALLOWED_CHANNELS
       })
       .expect(201);
 

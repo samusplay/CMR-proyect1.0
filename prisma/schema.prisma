@@ -7,6 +7,29 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum SystemType {
+  MONOFASICO
+  BIFASICO
+  TRIFASICO
+}
+
+enum AnchorType {
+  CHAZOS
+  TORNILLOS
+  UNISTRUT
+}
+
+enum InspectionStatus {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+}
+
+enum ChargerMountType {
+  ADOSADO_A_MURO
+  PEDESTAL
+}
+
 enum InstallationType {
   SOLAR
   CARGADOR
@@ -69,13 +92,68 @@ model Deal {
 }
 
 model Client {
-  id                String   @id @default(uuid())
-  name               String
-  email              String
-  phone              String?
-  address            String?
-  installationDate   DateTime?
-  deal               Deal     @relation(fields: [dealId], references: [id])
-  dealId             String   @unique
-  createdAt          DateTime @default(now())
+  id               String      @id @default(uuid())
+  name             String
+  email            String
+  phone            String?
+  address          String?
+  installationDate DateTime?
+  deal             Deal        @relation(fields: [dealId], references: [id])
+  dealId           String      @unique
+  inspection       Inspection?
+  createdAt        DateTime    @default(now())
+}
+
+model Inspection {
+  id       String @id @default(uuid())
+  client   Client @relation(fields: [clientId], references: [id])
+  clientId String @unique
+
+  // 1. Información general
+  inspectorName  String
+  inspectionDate DateTime @default(now())
+  location       String?
+  parkingNumber  String?
+
+  // 2. Red eléctrica existente
+  systemType           SystemType
+  systemDetail         String? // ej: "3Ø 208/120V"
+  originPoint          String
+  panelIdentification  String?
+  breakerCapacity      String?
+  hasPanelSpace        Boolean
+  availablePanelSpaces String?
+  requiresDrilling     Boolean
+  drillingLocation     String?
+
+  // 3. Trayectoria y canalización
+  conduitType      String?
+  conduitCondition String?
+  conduitLength    Float?
+  cableLength      Float?
+  cableGauge       String?
+
+  // 4. Instalación física y anclajes
+  mountSurface     String?
+  wallCondition    String?
+  anchorType       AnchorType?
+  requiredHardware String?
+  chargerMountType ChargerMountType?
+  chargerModel     String?
+
+  // 5. Seguridad
+  differentialProtectionRequired Boolean
+  differentialType                String?
+  groundResistanceOhms            Float?
+  neutralGroundReading            String?
+  measuredVoltage                 Float?
+  lightingCondition               String?
+
+  // 6-7. Observaciones y aprobación
+  observations String?
+  status       InspectionStatus @default(PENDIENTE)
+  approvedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

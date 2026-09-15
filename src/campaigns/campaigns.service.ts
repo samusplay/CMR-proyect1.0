@@ -4,7 +4,7 @@ import { CreateCampaignDto } from './dtos/create-campaign.dto';
 import { UpdateCampaignDto } from './dtos/update-campaign.dto';
 //Canales Permitidos
 
-const ALLOWED_CHANNELS = ['facebook', 'google', 'instagram', 'referido'];
+const ALLOWED_CHANNELS = ['facebook', 'google', 'instagram', 'referido', 'tiktok'];
 @Injectable()
 export class CampaignsService {
     constructor(private prisma: PrismaService) { }
