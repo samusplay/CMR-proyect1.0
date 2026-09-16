@@ -1,0 +1,41 @@
+import { AnchorType, ChargerMountType, InspectionStatus, SystemType } from '@prisma/client';
+
+export class InspectionResponseDto {
+  id!: string;
+  clientId!: string;
+  inspectorName!: string;
+  inspectionDate!: Date;
+  location!: string | null;
+  parkingNumber!: string | null;
+  systemType !: SystemType;
+  systemDetail !: string | null;
+  originPoint !: string;
+  panelIdentification !: string | null;
+  breakerCapacity !: string | null;
+  hasPanelSpace !: boolean;
+  availablePanelSpaces !: string | null;
+  requiresDrilling !: boolean;
+  drillingLocation !: string | null;
+  conduitType !: string | null;
+  conduitCondition !: string | null;
+  conduitLength !: number | null;
+  cableLength !: number | null;
+  cableGauge !: string | null;
+  mountSurface!: string | null;
+  wallCondition !: string | null;
+  anchorType !: AnchorType | null;
+  requiredHardware !: string | null;
+  chargerMountType !: ChargerMountType | null;
+  chargerModel !: string | null;
+  differentialProtectionRequired !: boolean;
+  differentialType !: string | null;
+  groundResistanceOhms !: number | null;
+  neutralGroundReading !: string | null;
+  measuredVoltage !: number | null;
+  lightingCondition !: string | null;
+  observations !: string | null;
+  status !: InspectionStatus;
+  approvedAt !: Date | null;
+  createdAt !: Date;
+  updatedAt !: Date;
+}
