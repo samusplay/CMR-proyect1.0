@@ -9,6 +9,7 @@ import { LeadsModule } from './leads/leads.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 import { InspectionsModule } from './inspections/inspections.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
 
 
 @Module({
@@ -23,7 +24,8 @@ import { InspectionsModule } from './inspections/inspections.module';
    ClientsModule,
    UsersModule,
    AuthModule,
-   InspectionsModule
+   InspectionsModule,
+   WebhooksModule
   ],
 })
 export class AppModule {}

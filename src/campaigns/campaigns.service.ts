@@ -48,4 +48,7 @@ export class CampaignsService {
             data: { active: false },
         });
     }
+    async findByNameAndChannel(name: string, channel: string) {
+        return this.prisma.campaign.findFirst({ where: { name, channel, active: true } });
+    }
 }
