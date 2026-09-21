@@ -1,5 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { DealsService } from '../deals/deals.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { LeadsService } from './leads.service';
@@ -7,6 +8,7 @@ import { LeadsService } from './leads.service';
 describe('LeadsService', () => {
   let service: LeadsService;
   let prisma: any;
+  let dealsService: any;
 
   beforeEach(async () => {
     prisma = {
@@ -20,10 +22,13 @@ describe('LeadsService', () => {
       },
     };
 
+    dealsService = { create: jest.fn() };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LeadsService,
         { provide: PrismaService, useValue: prisma },
+        { provide: DealsService, useValue: dealsService },
       ],
     }).compile();
 

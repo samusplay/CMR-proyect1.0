@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { DealsModule } from 'src/deals/deals.module';
 import { AuthModule } from '../auth/auth.module';
+import { DealsModule } from '../deals/deals.module';
 import { LeadsController } from './leads.controller';
 import { LeadsService } from './leads.service';
 

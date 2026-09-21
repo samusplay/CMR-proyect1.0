@@ -45,6 +45,13 @@ enum DealStage {
   PERDIDO
 }
 
+enum OfferStatus {
+  BORRADOR
+  ENVIADA
+  ACEPTADA
+  RECHAZADA
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -89,6 +96,7 @@ model Deal {
   leadId            String            @unique
   client            Client?
   inspection        Inspection?
+  offer             Offer?
   updatedAt         DateTime          @updatedAt
 }
 
@@ -156,4 +164,36 @@ model Inspection {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Offer {
+  id                String      @id @default(uuid())
+  deal              Deal        @relation(fields: [dealId], references: [id])
+  dealId            String      @unique
+  offerNumber       String      @unique
+  title             String
+  aiuPercentage     Float       @default(0.15)
+  ivaPercentage     Float       @default(0.19)
+  deliveryTime      String?
+  deliveryCondition String?
+  warranty          String?
+  paymentTerms      String?
+  validityDays      Int         @default(30)
+  status            OfferStatus @default(BORRADOR)
+  pdfUrl            String?
+  items             OfferItem[]
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+}
+
+model OfferItem {
+  id          String  @id @default(uuid())
+  offer       Offer   @relation(fields: [offerId], references: [id])
+  offerId     String
+  lineNumber  Int
+  unitCode    String?
+  description String
+  quantity    Float
+  unitPrice   Int
+  groupLabel  String?
 }
