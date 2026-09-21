@@ -54,11 +54,11 @@ describe('CampaignsService', () => {
       });
     });
 
-    it('lanza BadRequestException si el canal no está permitido, y nunca crea', () => {
-      const dto = { channel: 'tiktok' } as CreateCampaignDto;
+    it('lanza BadRequestException si el canal no está permitido, y nunca crea', async () => {
+      const dto = { channel: 'snapchat' } as CreateCampaignDto;
 
       expect(() => service.create(dto)).toThrow(
-        new BadRequestException('Canal inválido: tiktok'),
+        new BadRequestException('Canal inválido: snapchat'),
       );
       expect(prisma.campaign.create).not.toHaveBeenCalled();
     });

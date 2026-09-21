@@ -3,25 +3,24 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateInspectionDto } from './dtos/create-inspection.dto';
 import { UpdateInspectionDto } from './dtos/update-inspection.dto';
 
-
 @Injectable()
 export class InspectionsService {
   constructor(private prisma: PrismaService) {}
 
   async create(dto: CreateInspectionDto) {
-    await this.validateClientForInspection(dto.clientId);
+    await this.validateDealForInspection(dto.dealId);
 
     return this.prisma.inspection.create({ data: dto });
   }
 
   findAll() {
-    return this.prisma.inspection.findMany({ include: { client: true } });
+    return this.prisma.inspection.findMany({ include: { deal: true } });
   }
 
   async findOne(id: string) {
     const inspection = await this.prisma.inspection.findUnique({
       where: { id },
-      include: { client: true },
+      include: { deal: true },
     });
 
     if (!inspection) {
@@ -34,31 +33,30 @@ export class InspectionsService {
   async update(id: string, dto: UpdateInspectionDto) {
     await this.findOne(id);
 
-    // clientId nunca se puede reasignar desde un update
-    const { clientId, ...safeData } = dto;
+    // dealId nunca se puede reasignar desde un update
+    const { dealId, ...safeData } = dto;
 
     return this.prisma.inspection.update({
       where: { id },
       data: {
         ...safeData,
-        // si la están aprobando justo ahora, sella la fecha automáticamente
         approvedAt: dto.status === 'APROBADA' ? new Date() : undefined,
       },
     });
   }
 
   // --- privado: agrupa las dos reglas de negocio del create en un solo lugar ---
-  private async validateClientForInspection(clientId: string) {
-    const client = await this.prisma.client.findUnique({ where: { id: clientId } });
+  private async validateDealForInspection(dealId: string) {
+    const deal = await this.prisma.deal.findUnique({ where: { id: dealId } });
 
-    if (!client) {
-      throw new NotFoundException(`El cliente ${clientId} no existe`);
+    if (!deal) {
+      throw new NotFoundException(`El deal ${dealId} no existe`);
     }
 
-    const existingInspection = await this.prisma.inspection.findUnique({ where: { clientId } });
+    const existingInspection = await this.prisma.inspection.findUnique({ where: { dealId } });
 
     if (existingInspection) {
-      throw new ConflictException(`El cliente ${clientId} ya tiene una inspección registrada`);
+      throw new ConflictException(`El deal ${dealId} ya tiene una inspección registrada`);
     }
   }
 }

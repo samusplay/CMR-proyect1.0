@@ -1,19 +1,19 @@
 import { AnchorType, ChargerMountType, SystemType } from '@prisma/client';
 import {
-    IsBoolean,
-    IsEnum,
-    IsNotEmpty,
-    IsNumber,
-    IsOptional,
-    IsString,
+  IsBoolean,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
 } from 'class-validator';
 
 //Adaptar pasos en el frontend 
 export class CreateInspectionDto {
   // Relación
-  @IsString({ message: 'El id del cliente debe ser un texto' })
-  @IsNotEmpty({ message: 'El id del cliente es obligatorio' })
-  clientId !: string;
+  @IsString({ message: 'El id del deal debe ser un texto' })
+  @IsNotEmpty({ message: 'El id del deal es obligatorio' })
+  dealId !: string;
 
   // 1. Información general
   @IsString({ message: 'El nombre del inspector debe ser un texto' })

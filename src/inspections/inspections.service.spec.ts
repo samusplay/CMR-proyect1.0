@@ -11,7 +11,7 @@ describe('InspectionsService', () => {
   let prisma: any;
 
   const baseDto: CreateInspectionDto = {
-    clientId: 'client-1',
+    dealId: 'deal-1',
     inspectorName: 'Samuel Pérez',
     systemType: 'TRIFASICO' as any,
     originPoint: 'Tablero principal',
@@ -22,7 +22,7 @@ describe('InspectionsService', () => {
 
   beforeEach(async () => {
     prisma = {
-      client: { findUnique: jest.fn() },
+      deal: { findUnique: jest.fn() },
       inspection: {
         create: jest.fn(),
         findMany: jest.fn(),
@@ -46,8 +46,8 @@ describe('InspectionsService', () => {
   });
 
   describe('create', () => {
-    it('crea la inspección si el cliente existe y no tiene una previa', async () => {
-      prisma.client.findUnique.mockResolvedValue({ id: 'client-1' });
+    it('crea la inspección si el deal existe y no tiene una previa', async () => {
+      prisma.deal.findUnique.mockResolvedValue({ id: 'deal-1' });
       prisma.inspection.findUnique.mockResolvedValue(null);
       prisma.inspection.create.mockResolvedValue({ id: 'insp-1', ...baseDto });
 
@@ -56,22 +56,22 @@ describe('InspectionsService', () => {
       expect(prisma.inspection.create).toHaveBeenCalledWith({ data: baseDto });
     });
 
-    it('lanza NotFoundException si el cliente no existe, y nunca crea', async () => {
-      prisma.client.findUnique.mockResolvedValue(null);
+    it('lanza NotFoundException si el deal no existe, y nunca crea', async () => {
+      prisma.deal.findUnique.mockResolvedValue(null);
 
       await expect(service.create(baseDto)).rejects.toThrow(
-        new NotFoundException(`El cliente ${baseDto.clientId} no existe`),
+        new NotFoundException(`El deal ${baseDto.dealId} no existe`),
       );
 
       expect(prisma.inspection.create).not.toHaveBeenCalled();
     });
 
-    it('lanza ConflictException si el cliente ya tiene una inspección, y nunca crea', async () => {
-      prisma.client.findUnique.mockResolvedValue({ id: 'client-1' });
+    it('lanza ConflictException si el deal ya tiene una inspección, y nunca crea', async () => {
+      prisma.deal.findUnique.mockResolvedValue({ id: 'deal-1' });
       prisma.inspection.findUnique.mockResolvedValue({ id: 'insp-existente' });
 
       await expect(service.create(baseDto)).rejects.toThrow(
-        new ConflictException(`El cliente ${baseDto.clientId} ya tiene una inspección registrada`),
+        new ConflictException(`El deal ${baseDto.dealId} ya tiene una inspección registrada`),
       );
 
       expect(prisma.inspection.create).not.toHaveBeenCalled();
@@ -79,10 +79,10 @@ describe('InspectionsService', () => {
   });
 
   describe('findAll', () => {
-    it('incluye el client en la respuesta', async () => {
+    it('incluye el deal en la respuesta', async () => {
       await service.findAll();
 
-      expect(prisma.inspection.findMany).toHaveBeenCalledWith({ include: { client: true } });
+      expect(prisma.inspection.findMany).toHaveBeenCalledWith({ include: { deal: true } });
     });
   });
 
@@ -97,12 +97,12 @@ describe('InspectionsService', () => {
   });
 
   describe('update', () => {
-    it('ignora un clientId inyectado en el body', async () => {
+    it('ignora un dealId inyectado en el body', async () => {
       const id = 'insp-1';
       prisma.inspection.findUnique.mockResolvedValue({ id, status: 'PENDIENTE' });
       prisma.inspection.update.mockResolvedValue({ id });
 
-      await service.update(id, { clientId: 'otro-cliente', observations: 'todo bien' } as any);
+      await service.update(id, { dealId: 'otro-deal', observations: 'todo bien' } as any);
 
       expect(prisma.inspection.update).toHaveBeenCalledWith({
         where: { id },

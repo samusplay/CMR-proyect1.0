@@ -88,6 +88,7 @@ model Deal {
   lead              Lead              @relation(fields: [leadId], references: [id])
   leadId            String            @unique
   client            Client?
+  inspection        Inspection?
   updatedAt         DateTime          @updatedAt
 }
 
@@ -100,14 +101,13 @@ model Client {
   installationDate DateTime?
   deal             Deal        @relation(fields: [dealId], references: [id])
   dealId           String      @unique
-  inspection       Inspection?
   createdAt        DateTime    @default(now())
 }
 
 model Inspection {
-  id       String @id @default(uuid())
-  client   Client @relation(fields: [clientId], references: [id])
-  clientId String @unique
+  id     String @id @default(uuid())
+  deal   Deal   @relation(fields: [dealId], references: [id])
+  dealId String @unique
 
   // 1. Información general
   inspectorName  String

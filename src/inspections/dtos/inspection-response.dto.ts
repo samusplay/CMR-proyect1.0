@@ -2,8 +2,8 @@ import { AnchorType, ChargerMountType, InspectionStatus, SystemType } from '@pri
 
 export class InspectionResponseDto {
   id!: string;
-  clientId!: string;
-  inspectorName!: string;
+  dealId!: string; 
+ inspectorName!: string;
   inspectionDate!: Date;
   location!: string | null;
   parkingNumber!: string | null;
