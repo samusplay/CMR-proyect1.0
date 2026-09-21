@@ -1,11 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { CreateDealDto } from 'src/deals/dto/create-deal.dto';
+import { DealsService } from '../deals/deals.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreateFieldVisitDto } from './dto/create-field-visit.dto';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
-
 @Injectable()
 export class LeadsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private dealsService: DealsService, 
+  ) {}
 
   async create(dto: CreateLeadDto) {
     // si mandan campaignId, confirmamos que esa campaña exista de verdad
@@ -52,4 +57,22 @@ export class LeadsService {
 
     return this.prisma.lead.delete({ where: { id } });
   }
+
+  //Vista Tecnica endpoint
+  async startFieldVisit(dto: CreateFieldVisitDto) {
+  const lead = await this.create({
+    name: dto.name,
+    email: dto.email,
+    phone: dto.phone,
+    campaignId: dto.campaignId,
+  } as CreateLeadDto);
+
+  const deal = await this.dealsService.create({
+    leadId: lead.id,
+    installationType: dto.installationType,
+    estimatedValue: 0, // se actualiza después, cuando se calcule la oferta con Inspection
+  } as CreateDealDto);
+
+  return { leadId: lead.id, dealId: deal.id };
+}
 }

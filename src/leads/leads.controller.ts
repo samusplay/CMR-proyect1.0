@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CreateFieldVisitDto } from './dto/create-field-visit.dto';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
 import { LeadsService } from './leads.service';
@@ -33,4 +34,10 @@ export class LeadsController {
   remove(@Param('id') id: string) {
     return this.leadsService.remove(id);
   }
+
+  //Crear Lead en La visita
+  @Post('field-visits')
+startVisit(@Body() dto: CreateFieldVisitDto) {
+  return this.leadsService.startFieldVisit(dto);
+}
 }
