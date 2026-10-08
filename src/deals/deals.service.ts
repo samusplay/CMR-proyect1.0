@@ -11,7 +11,7 @@ export class DealsService {
   constructor(
     private prisma: PrismaService,
     private eventEmitter: EventEmitter2,
-  ) {}
+  ) { }
 
   async create(dto: CreateDealDto) {
     const lead = await this.prisma.lead.findUnique({ where: { id: dto.leadId } });
@@ -33,17 +33,19 @@ export class DealsService {
   }
 
   findAll() {
-    return this.prisma.deal.findMany({ include: { lead: true } });
+    return this.prisma.deal.findMany({ include: { lead: true, inspection: true } });
   }
 
   async findOne(id: string) {
     const deal = await this.prisma.deal.findUnique({
       where: { id },
-      include: { lead: true },
+      include: { lead: true, inspection: true },
     });
+
     if (!deal) {
       throw new NotFoundException(`Deal ${id} no encontrado`);
     }
+
     return deal;
   }
 
