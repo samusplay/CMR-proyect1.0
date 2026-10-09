@@ -10,6 +10,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 import { InspectionsModule } from './inspections/inspections.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
+import { AppointmentsModule } from './appointments/appointments.module';
 
 
 @Module({
@@ -25,7 +26,8 @@ import { WebhooksModule } from './webhooks/webhooks.module';
    UsersModule,
    AuthModule,
    InspectionsModule,
-   WebhooksModule
+   WebhooksModule,
+   AppointmentsModule
   ],
 })
 export class AppModule {}

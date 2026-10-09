@@ -52,14 +52,24 @@ enum OfferStatus {
   RECHAZADA
 }
 
+enum AppointmentStatus {
+  PROGRAMADA
+  REPROGRAMADA
+  COMPLETADA
+  CANCELADA
+}
+
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      String   @default("vendedor")
-  deals     Deal[]
-  createdAt DateTime @default(now())
+  id                      String                  @id @default(uuid())
+  name                    String
+  email                   String                  @unique
+  password                String
+  role                    String                  @default("vendedor")
+  deals                   Deal[]
+  appointmentsAsInspector InspectionAppointment[] @relation("AppointmentInspector")
+  appointmentsScheduled   InspectionAppointment[] @relation("AppointmentScheduler")
+  appointmentsClosed      InspectionAppointment[] @relation("AppointmentCloser") // 👈 nuevo
+  createdAt               DateTime                @default(now())
 }
 
 model Campaign {
@@ -84,20 +94,21 @@ model Lead {
 }
 
 model Deal {
-  id                String            @id @default(uuid())
-  stage             DealStage         @default(NUEVO)
+  id                String                  @id @default(uuid())
+  stage             DealStage               @default(NUEVO)
   installationType  InstallationType
-  estimatedValue    Int               // valor estimado de la instalación, en pesos
-  expectedCloseDate DateTime?         // para saber cuándo se espera cerrar
-  notes             String?           // notas del vendedor durante la negociación
-  assignedTo        User?             @relation(fields: [assignedToId], references: [id])
+  estimatedValue    Int                     // valor estimado de la instalación, en pesos
+  expectedCloseDate DateTime?               // para saber cuándo se espera cerrar
+  notes             String?                 // notas del vendedor durante la negociación
+  assignedTo        User?                   @relation(fields: [assignedToId], references: [id])
   assignedToId      String?
-  lead              Lead              @relation(fields: [leadId], references: [id])
-  leadId            String            @unique
+  lead              Lead                    @relation(fields: [leadId], references: [id])
+  leadId            String                  @unique
   client            Client?
   inspection        Inspection?
   offer             Offer?
-  updatedAt         DateTime          @updatedAt
+  appointments      InspectionAppointment[]
+  updatedAt         DateTime                @updatedAt
 }
 
 model Client {
@@ -196,4 +207,27 @@ model OfferItem {
   quantity    Float
   unitPrice   Int
   groupLabel  String?
+}
+
+model InspectionAppointment {
+  id            String            @id @default(uuid())
+  deal          Deal              @relation(fields: [dealId], references: [id])
+  dealId        String
+  scheduledAt   DateTime          // se guarda en UTC; la app lo muestra en hora de Bogotá
+  status        AppointmentStatus @default(PROGRAMADA)
+  inspector     User?             @relation("AppointmentInspector", fields: [inspectorId], references: [id])
+  inspectorId   String?
+  scheduledBy   User              @relation("AppointmentScheduler", fields: [scheduledById], references: [id])
+  scheduledById String
+  closedBy      User?             @relation("AppointmentCloser", fields: [closedById], references: [id]) //
+  closedById    String?           // quién la reprogramó o canceló
+  closedAt      DateTime?         
+  notes         String?
+  reason        String?           // motivo de cancelación o reprogramación
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([dealId])
+  @@index([inspectorId, scheduledAt])
+  @@index([scheduledAt])
 }
