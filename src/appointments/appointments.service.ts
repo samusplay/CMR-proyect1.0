@@ -1,10 +1,16 @@
 import {
-    BadRequestException,
-    ConflictException,
-    Injectable,
-    NotFoundException,
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
 } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
 import { AppointmentStatus, Prisma } from '@prisma/client';
+import {
+  INSPECTION_CREATED_EVENT,
+  InspectionCreatedEvent,
+} from '../inspections/events/inspection-created.event';
 import { PrismaService } from '../prisma/prisma.service';
 import { CancelAppointmentDto } from './dto/cancel-appointment.dto';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
@@ -28,6 +34,8 @@ const appointmentInclude = {
 
 @Injectable()
 export class AppointmentsService {
+  private readonly logger = new Logger(AppointmentsService.name);
+
   constructor(private prisma: PrismaService) {}
 
   async create(dto: CreateAppointmentDto, scheduledById: string) {
@@ -130,8 +138,8 @@ export class AppointmentsService {
         data: {
           status: AppointmentStatus.REPROGRAMADA,
           reason: dto.reason,
-          closedById: userId, 
-          closedAt: new Date(), 
+          closedById: userId,
+          closedAt: new Date(),
         },
       });
       if (count === 0) {
@@ -165,7 +173,7 @@ export class AppointmentsService {
       data: {
         status: AppointmentStatus.CANCELADA,
         reason: dto.reason,
-        closedById: userId, 
+        closedById: userId,
         closedAt: new Date(),
       },
     });
@@ -174,6 +182,30 @@ export class AppointmentsService {
     }
 
     return this.findOne(id);
+  }
+
+  // Cuando se registra la inspección, la visita ya ocurrió: la cita abierta del deal se completa.
+  // try/catch a propósito: si esto falla, la inspección ya quedó guardada y no debe romperse
+  @OnEvent(INSPECTION_CREATED_EVENT)
+  async handleInspectionCreated(event: InspectionCreatedEvent) {
+    try {
+      const { count } = await this.prisma.inspectionAppointment.updateMany({
+        where: { dealId: event.dealId, status: AppointmentStatus.PROGRAMADA },
+        data: {
+          status: AppointmentStatus.COMPLETADA,
+          closedAt: new Date(),
+        },
+      });
+
+      if (count > 0) {
+        this.logger.log(`Cita del deal ${event.dealId} marcada COMPLETADA (inspección ${event.inspectionId})`);
+      }
+    } catch (error) {
+      this.logger.error(
+        `No se pudo completar la cita del deal ${event.dealId}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+    }
   }
 
   // --- privados ---

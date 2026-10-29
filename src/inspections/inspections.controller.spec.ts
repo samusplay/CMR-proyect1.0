@@ -1,3 +1,4 @@
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PrismaService } from '../prisma/prisma.service';
@@ -13,6 +14,7 @@ describe('InspectionsController', () => {
       providers: [
         InspectionsService,
         { provide: PrismaService, useValue: {} },
+        { provide: EventEmitter2, useValue: { emit: jest.fn() } },
       ],
     })
       .overrideGuard(JwtAuthGuard)

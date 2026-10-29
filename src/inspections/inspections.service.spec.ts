@@ -1,14 +1,20 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateInspectionDto } from './dtos/create-inspection.dto';
+import {
+  INSPECTION_CREATED_EVENT,
+  InspectionCreatedEvent,
+} from './events/inspection-created.event';
 import { InspectionsService } from './inspections.service';
 
 
 describe('InspectionsService', () => {
   let service: InspectionsService;
   let prisma: any;
+  let eventEmitter: { emit: jest.Mock };
 
   const baseDto: CreateInspectionDto = {
     dealId: 'deal-1',
@@ -31,10 +37,13 @@ describe('InspectionsService', () => {
       },
     };
 
+    eventEmitter = { emit: jest.fn() };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InspectionsService,
         { provide: PrismaService, useValue: prisma },
+        { provide: EventEmitter2, useValue: eventEmitter },
       ],
     }).compile();
 
@@ -56,7 +65,30 @@ describe('InspectionsService', () => {
       expect(prisma.inspection.create).toHaveBeenCalledWith({ data: baseDto });
     });
 
-    it('lanza NotFoundException si el deal no existe, y nunca crea', async () => {
+    it('emite inspection.created con el id de la inspección y el del deal', async () => {
+      prisma.deal.findUnique.mockResolvedValue({ id: 'deal-1' });
+      prisma.inspection.findUnique.mockResolvedValue(null);
+      prisma.inspection.create.mockResolvedValue({ id: 'insp-1', dealId: 'deal-1' });
+
+      await service.create(baseDto);
+
+      expect(eventEmitter.emit).toHaveBeenCalledTimes(1);
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        INSPECTION_CREATED_EVENT,
+        new InspectionCreatedEvent('insp-1', 'deal-1'),
+      );
+    });
+
+    it('devuelve la inspección creada', async () => {
+      const creada = { id: 'insp-1', dealId: 'deal-1' };
+      prisma.deal.findUnique.mockResolvedValue({ id: 'deal-1' });
+      prisma.inspection.findUnique.mockResolvedValue(null);
+      prisma.inspection.create.mockResolvedValue(creada);
+
+      await expect(service.create(baseDto)).resolves.toEqual(creada);
+    });
+
+    it('lanza NotFoundException si el deal no existe, y nunca crea ni emite', async () => {
       prisma.deal.findUnique.mockResolvedValue(null);
 
       await expect(service.create(baseDto)).rejects.toThrow(
@@ -64,9 +96,10 @@ describe('InspectionsService', () => {
       );
 
       expect(prisma.inspection.create).not.toHaveBeenCalled();
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
 
-    it('lanza ConflictException si el deal ya tiene una inspección, y nunca crea', async () => {
+    it('lanza ConflictException si el deal ya tiene una inspección, y nunca crea ni emite', async () => {
       prisma.deal.findUnique.mockResolvedValue({ id: 'deal-1' });
       prisma.inspection.findUnique.mockResolvedValue({ id: 'insp-existente' });
 
@@ -75,6 +108,7 @@ describe('InspectionsService', () => {
       );
 
       expect(prisma.inspection.create).not.toHaveBeenCalled();
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
   });
 

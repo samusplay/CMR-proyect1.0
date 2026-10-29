@@ -1,16 +1,31 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateInspectionDto } from './dtos/create-inspection.dto';
 import { UpdateInspectionDto } from './dtos/update-inspection.dto';
+import {
+  INSPECTION_CREATED_EVENT,
+  InspectionCreatedEvent,
+} from './events/inspection-created.event';
 
 @Injectable()
 export class InspectionsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   async create(dto: CreateInspectionDto) {
     await this.validateDealForInspection(dto.dealId);
 
-    return this.prisma.inspection.create({ data: dto });
+    const inspection = await this.prisma.inspection.create({ data: dto });
+
+    this.eventEmitter.emit(
+      INSPECTION_CREATED_EVENT,
+      new InspectionCreatedEvent(inspection.id, inspection.dealId),
+    );
+
+    return inspection;
   }
 
   findAll() {

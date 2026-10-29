@@ -1,6 +1,7 @@
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Logger, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppointmentStatus } from '@prisma/client';
+import { InspectionCreatedEvent } from '../inspections/events/inspection-created.event';
 import { PrismaService } from '../prisma/prisma.service';
 import { AppointmentsService } from './appointments.service';
 
@@ -430,6 +431,62 @@ describe('AppointmentsService', () => {
       );
 
       expect(prisma.inspectionAppointment.updateMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('handleInspectionCreated', () => {
+    const event = new InspectionCreatedEvent('insp-1', 'deal-1');
+    let errorSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      prisma.inspectionAppointment.updateMany.mockResolvedValue({ count: 1 });
+      // Silencia los logs en la salida de los tests y deja espiar el de error
+      jest.spyOn(Logger.prototype, 'log').mockImplementation();
+      errorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation();
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('pasa a COMPLETADA la cita PROGRAMADA del deal con la fecha de cierre', async () => {
+      await service.handleInspectionCreated(event);
+
+      expect(prisma.inspectionAppointment.updateMany).toHaveBeenCalledWith({
+        where: { dealId: 'deal-1', status: AppointmentStatus.PROGRAMADA },
+        data: {
+          status: AppointmentStatus.COMPLETADA,
+          closedAt: expect.any(Date),
+        },
+      });
+    });
+
+    it('solo toca citas PROGRAMADA: no reabre ni modifica las ya cerradas', async () => {
+      await service.handleInspectionCreated(event);
+
+      const { where } = prisma.inspectionAppointment.updateMany.mock.calls[0][0];
+      expect(where.status).toBe(AppointmentStatus.PROGRAMADA);
+    });
+
+    it('no asigna closedById: la cierra el sistema, no una persona', async () => {
+      await service.handleInspectionCreated(event);
+
+      const { data } = prisma.inspectionAppointment.updateMany.mock.calls[0][0];
+      expect(data).not.toHaveProperty('closedById');
+    });
+
+    it('no falla si el deal no tenía cita abierta (count 0)', async () => {
+      prisma.inspectionAppointment.updateMany.mockResolvedValue({ count: 0 });
+
+      await expect(service.handleInspectionCreated(event)).resolves.toBeUndefined();
+      expect(errorSpy).not.toHaveBeenCalled();
+    });
+
+    it('si la base falla, registra el error y NO lo propaga', async () => {
+      prisma.inspectionAppointment.updateMany.mockRejectedValue(new Error('db caída'));
+
+      await expect(service.handleInspectionCreated(event)).resolves.toBeUndefined();
+      expect(errorSpy).toHaveBeenCalledTimes(1);
     });
   });
 });
