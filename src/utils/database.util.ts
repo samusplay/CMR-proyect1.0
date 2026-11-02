@@ -6,6 +6,7 @@ export async function cleanDatabase(prisma: PrismaClient) {
   // al final lo que nadie más referencia
   await prisma.inspectionAppointment.deleteMany();
   await prisma.offerItem.deleteMany();
+  await prisma.material.deleteMany();
   await prisma.offer.deleteMany();
   await prisma.inspection.deleteMany();
   await prisma.client.deleteMany();

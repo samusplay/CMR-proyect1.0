@@ -11,6 +11,7 @@ import { UsersModule } from './users/users.module';
 import { InspectionsModule } from './inspections/inspections.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { AppointmentsModule } from './appointments/appointments.module';
+import { MaterialsModule } from './materials/materials.module';
 
 
 @Module({
@@ -27,7 +28,8 @@ import { AppointmentsModule } from './appointments/appointments.module';
    AuthModule,
    InspectionsModule,
    WebhooksModule,
-   AppointmentsModule
+   AppointmentsModule,
+   MaterialsModule
   ],
 })
 export class AppModule {}

@@ -59,6 +59,17 @@ enum AppointmentStatus {
   CANCELADA
 }
 
+enum MaterialCategory {
+  CABLEADO
+  CANALIZACION
+  PROTECCIONES
+  CARGADOR
+  ANCLAJES
+  SOLAR
+  MANO_DE_OBRA
+  OTROS
+}
+
 model User {
   id                      String                  @id @default(uuid())
   name                    String
@@ -68,7 +79,7 @@ model User {
   deals                   Deal[]
   appointmentsAsInspector InspectionAppointment[] @relation("AppointmentInspector")
   appointmentsScheduled   InspectionAppointment[] @relation("AppointmentScheduler")
-  appointmentsClosed      InspectionAppointment[] @relation("AppointmentCloser") // 👈 nuevo
+  appointmentsClosed      InspectionAppointment[] @relation("AppointmentCloser")
   createdAt               DateTime                @default(now())
 }
 
@@ -177,6 +188,21 @@ model Inspection {
   updatedAt DateTime @updatedAt
 }
 
+model Material {
+  id          String           @id @default(uuid())
+  code        String           @unique
+  description String
+  category    MaterialCategory
+  unitCode    String           // UN, ML, etc.
+  unitPrice   Int              // pesos COP
+  active      Boolean          @default(true)
+  offerItems  OfferItem[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([category])
+}
+
 model Offer {
   id                String      @id @default(uuid())
   deal              Deal        @relation(fields: [dealId], references: [id])
@@ -198,9 +224,11 @@ model Offer {
 }
 
 model OfferItem {
-  id          String  @id @default(uuid())
-  offer       Offer   @relation(fields: [offerId], references: [id])
+  id          String    @id @default(uuid())
+  offer       Offer     @relation(fields: [offerId], references: [id])
   offerId     String
+  material    Material? @relation(fields: [materialId], references: [id])
+  materialId  String?
   lineNumber  Int
   unitCode    String?
   description String
@@ -219,9 +247,9 @@ model InspectionAppointment {
   inspectorId   String?
   scheduledBy   User              @relation("AppointmentScheduler", fields: [scheduledById], references: [id])
   scheduledById String
-  closedBy      User?             @relation("AppointmentCloser", fields: [closedById], references: [id]) //
+  closedBy      User?             @relation("AppointmentCloser", fields: [closedById], references: [id])
   closedById    String?           // quién la reprogramó o canceló
-  closedAt      DateTime?         
+  closedAt      DateTime?
   notes         String?
   reason        String?           // motivo de cancelación o reprogramación
   createdAt     DateTime          @default(now())
