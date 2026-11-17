@@ -1,8 +1,9 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { ConflictException, Logger, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { DealWonEvent } from '../leads/events/deal-won.event';
+import { OfferStatusChangedEvent } from '../offers/events/offer-status-changed.event';
 import { PrismaService } from '../prisma/prisma.service';
 import { DealsService } from './deals.service';
 import { CreateDealDto } from './dto/create-deal.dto';
@@ -90,12 +91,12 @@ describe('DealsService', () => {
   });
 
   describe('findAll', () => {
-    it('retorna todos los deals incluyendo su lead', async () => {
+    it('retorna todos los deals incluyendo su lead y su inspección', async () => {
       prisma.deal.findMany.mockResolvedValue([{ id: 'deal-1', lead: { id: 'lead-1' } }]);
 
       const result = await service.findAll();
 
-      expect(prisma.deal.findMany).toHaveBeenCalledWith({ include: { lead: true } });
+      expect(prisma.deal.findMany).toHaveBeenCalledWith({ include: { lead: true, inspection: true } });
       expect(result).toHaveLength(1);
     });
   });
@@ -108,7 +109,7 @@ describe('DealsService', () => {
 
       expect(prisma.deal.findUnique).toHaveBeenCalledWith({
         where: { id: 'deal-1' },
-        include: { lead: true },
+        include: { lead: true, inspection: true },
       });
     });
 
@@ -180,6 +181,64 @@ describe('DealsService', () => {
         where: { id },
         data: { stage: 'PERDIDO' },
       });
+    });
+  });
+
+  describe('handleOfferStatusChanged', () => {
+    let errorSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      jest.spyOn(Logger.prototype, 'log').mockImplementation();
+      errorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation();
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('oferta ENVIADA: el deal pasa a PROPUESTA', async () => {
+      prisma.deal.findUnique.mockResolvedValue({ id: 'deal-1', stage: 'NUEVO' });
+      prisma.deal.update.mockResolvedValue({ id: 'deal-1', stage: 'PROPUESTA' });
+
+      await service.handleOfferStatusChanged(new OfferStatusChangedEvent('offer-1', 'deal-1', 'ENVIADA'));
+
+      expect(prisma.deal.update).toHaveBeenCalledWith({
+        where: { id: 'deal-1' },
+        data: { stage: 'PROPUESTA', expectedCloseDate: undefined },
+      });
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
+    });
+
+    it('oferta ACEPTADA: el deal pasa a GANADO y se emite deal.won (que crea el cliente)', async () => {
+      prisma.deal.findUnique.mockResolvedValue({ id: 'deal-1', stage: 'PROPUESTA' });
+      prisma.deal.update.mockResolvedValue({ id: 'deal-1', stage: 'GANADO' });
+
+      await service.handleOfferStatusChanged(new OfferStatusChangedEvent('offer-1', 'deal-1', 'ACEPTADA'));
+
+      expect(prisma.deal.update).toHaveBeenCalledWith({
+        where: { id: 'deal-1' },
+        data: { stage: 'GANADO', expectedCloseDate: undefined },
+      });
+      expect(eventEmitter.emit).toHaveBeenCalledWith('deal.won', expect.any(DealWonEvent));
+    });
+
+    it('oferta RECHAZADA o de vuelta a BORRADOR: el deal no se mueve', async () => {
+      await service.handleOfferStatusChanged(new OfferStatusChangedEvent('offer-1', 'deal-1', 'RECHAZADA'));
+      await service.handleOfferStatusChanged(new OfferStatusChangedEvent('offer-1', 'deal-1', 'BORRADOR'));
+
+      expect(prisma.deal.findUnique).not.toHaveBeenCalled();
+      expect(prisma.deal.update).not.toHaveBeenCalled();
+    });
+
+    it('si falla (por ejemplo, el deal no existe), registra el error y NO lo propaga', async () => {
+      prisma.deal.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.handleOfferStatusChanged(new OfferStatusChangedEvent('offer-1', 'deal-404', 'ACEPTADA')),
+      ).resolves.toBeUndefined();
+
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      expect(prisma.deal.update).not.toHaveBeenCalled();
     });
   });
 });
