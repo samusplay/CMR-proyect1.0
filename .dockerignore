@@ -1,0 +1,16 @@
+# Dependencias y compilados: se generan dentro de la imagen
+node_modules
+dist
+coverage
+
+# Secretos: NUNCA entran en la imagen. En Azure llegan como variables de entorno
+.env
+.env.*
+
+# Lo que no hace falta para correr el backend
+test
+.git
+.gitignore
+.vscode
+*.md
+*.log
