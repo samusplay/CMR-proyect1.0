@@ -12,6 +12,7 @@ import { InspectionsModule } from './inspections/inspections.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { AppointmentsModule } from './appointments/appointments.module';
 import { MaterialsModule } from './materials/materials.module';
+import { OffersModule } from './offers/offers.module';
 
 
 @Module({
@@ -29,7 +30,8 @@ import { MaterialsModule } from './materials/materials.module';
    InspectionsModule,
    WebhooksModule,
    AppointmentsModule,
-   MaterialsModule
+   MaterialsModule,
+   OffersModule
   ],
 })
 export class AppModule {}

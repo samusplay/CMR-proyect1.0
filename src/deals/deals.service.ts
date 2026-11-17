@@ -1,13 +1,22 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
+import { DealStage, OfferStatus } from '@prisma/client';
 import { DealWonEvent } from '../leads/events/deal-won.event';
+import { OFFER_STATUS_CHANGED_EVENT, OfferStatusChangedEvent } from '../offers/events/offer-status-changed.event';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDealDto } from './dto/create-deal.dto';
 import { UpdateDealDto } from './dto/update-deal.dto';
 
+// Cómo avanza el deal cuando cambia su oferta. Los estados que no aparecen no mueven el deal
+const STAGE_BY_OFFER_STATUS: Partial<Record<OfferStatus, DealStage>> = {
+  ENVIADA: 'PROPUESTA',
+  ACEPTADA: 'GANADO',
+};
 
 @Injectable()
 export class DealsService {
+  private readonly logger = new Logger(DealsService.name);
+
   constructor(
     private prisma: PrismaService,
     private eventEmitter: EventEmitter2,
@@ -76,5 +85,25 @@ export class DealsService {
       where: { id },
       data: { stage: 'PERDIDO' },
     });
+  }
+
+  // La oferta mueve el deal: enviada → PROPUESTA; aceptada → GANADO (y deal.won crea el cliente).
+  // try/catch a propósito: si esto falla, el cambio de la oferta ya quedó guardado y no debe romperse
+  @OnEvent(OFFER_STATUS_CHANGED_EVENT)
+  async handleOfferStatusChanged(event: OfferStatusChangedEvent) {
+    const stage = STAGE_BY_OFFER_STATUS[event.status];
+    if (!stage) {
+      return;
+    }
+
+    try {
+      await this.update(event.dealId, { stage });
+      this.logger.log(`Deal ${event.dealId} pasó a ${stage} (oferta ${event.offerId} ${event.status})`);
+    } catch (error) {
+      this.logger.error(
+        `No se pudo mover el deal ${event.dealId} a ${stage}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+    }
   }
 }
