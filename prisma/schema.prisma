@@ -84,13 +84,14 @@ model User {
 }
 
 model Campaign {
-  id        String   @id @default(uuid())
-  name      String
-  channel   String
-  utmSource String?
-  active    Boolean  @default(true)
-  leads     Lead[]
-  createdAt DateTime @default(now())
+  id             String   @id @default(uuid())
+  name           String
+  channel        String
+  utmSource      String?
+  metaCampaignId String?  @unique // NUEVO: ID de la campaña en Meta, para cruzar gasto con ventas
+  active         Boolean  @default(true)
+  leads          Lead[]
+  createdAt      DateTime @default(now())
 }
 
 model Lead {
@@ -119,6 +120,7 @@ model Deal {
   inspection        Inspection?
   offer             Offer?
   appointments      InspectionAppointment[]
+  createdAt         DateTime                @default(now()) // NUEVO: cuándo se abrió la oportunidad
   updatedAt         DateTime                @updatedAt
 }
 
